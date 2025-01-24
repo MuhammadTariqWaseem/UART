@@ -1,0 +1,9 @@
+
+State Machine - |UART|current_state
+Name current_state.STOP_R current_state.STOP_T current_state.PARITY current_state.TRANSMIT current_state.RECIEVE current_state.IDLE 
+current_state.IDLE 0 0 0 0 0 0 
+current_state.RECIEVE 0 0 0 0 1 1 
+current_state.TRANSMIT 0 0 0 1 0 1 
+current_state.PARITY 0 0 1 0 0 1 
+current_state.STOP_T 0 1 0 0 0 1 
+current_state.STOP_R 1 0 0 0 0 1 
