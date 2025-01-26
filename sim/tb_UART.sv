@@ -3,10 +3,12 @@ module tb_UART;
   // Parameters
   parameter D_WIDTH      = 8;
   parameter PARITY_O_1   = 0; // Even parity
-  parameter CLK_FREQ_MHZ = 50;
+  parameter CLK_FREQ_MHZ = 4;
+  parameter CLK_FREQ_MHZ1= 100;
 
   // Clock and reset
-  logic clk;
+  logic clk  = 0;
+  logic clk1 = 0;
   logic arst_n;
 
   // Master UART signals
@@ -26,15 +28,16 @@ module tb_UART;
   logic               error_flag_slave;
 
   // Clock generation
-  always #10 clk = ~clk; // 50 MHz clock (period = 20 ns)
+  always #125 clk = ~clk; // 50 MHz clock (period = 20 ns)
+  always #5  clk1= ~clk1;// 100Mhz clock (period = 10 ns)
 
   // Instantiate Master UART
   UART #(
     .D_WIDTH(D_WIDTH),
     .PARITY_O_1(PARITY_O_1),
-    .CLK_FREQ_MHZ(CLK_FREQ_MHZ)
+    .CLK_FREQ_MHZ(CLK_FREQ_MHZ1)
   ) master_uart (
-    .clk(clk),
+    .clk(clk1),
     .arst_n(arst_n),
     .start(start_master),
     .data_in(data_in_master),
@@ -72,18 +75,18 @@ module tb_UART;
     data_in_slave  = 8'b0;
 
     // Reset
-    #50;
+    #500;
     arst_n = 1;
-
+    #10000;
 // Test case Master sending the data "Hi!"
 
     // Test case: Send "H" (0x48) and "i" (0x69) from Master to Slave
-    @(posedge clk);
+    #10;
     start_master = 1;
     data_in_master = 8'b01001000; // ASCII for 'H'
     #1000;
     start_master = 0;
-    #11000;
+    #13000;
     start_master = 1;
     data_in_master = 8'b01101001; // ASCII for 'i'
     #1000;

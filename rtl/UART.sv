@@ -21,6 +21,8 @@ logic       parity_check_R ;
 logic       parity_check_T ;
 logic       even_odd_R     ;
 logic       clk_gen        ;
+logic       start_d        ;
+logic       Rx_d           ;
 
 logic [D_WIDTH-1:0] data_buff;
 
@@ -40,7 +42,7 @@ always_ff @(posedge clk or negedge arst_n) begin
 	if(~arst_n) 
 		count <= 1;
 	else if(clk_gen)
-	   count <= 1;
+	  count <= 1;
 	else 
 		count <= count + 1;
 end
@@ -112,48 +114,60 @@ end
 ------------------------------------------------------------------------------*/
 
 always@(*) begin
-	case (current_state)
-		IDLE    : begin 
-			          if(start)
-			            Tx       <= 0;
-			          else
-			          	Tx       <= 1;
-			          data_out   <= 0;
-			          error_flag <= 0;
-			        end
-		RECIEVE : begin
-			          Tx         <= 1;
-			          error_flag <= 0;
-			          data_out   <= 0;
-			        end
-		TRANSMIT: begin
-			          if(counter == D_WIDTH)
-			          	Tx <= parity_check_T;
-			          else
-			            Tx <= data_buff[0];
-			          data_out   <= 0;
-			          error_flag <= 0;
-			        end
-		PARITY  : begin
-			          Tx         <= 1;
-			          if(Rx != parity_check_R) begin
-			          	error_flag <= 1  ;
-			            data_out   <= 0  ;
-			          end
-			          else begin	
-			            data_out   <= data_buff;
-			            error_flag <= 0;
-			          end 
-			        end
-		STOP_T  : Tx  <= 1;
-		STOP_R  : if(Rx != 1) error_flag <= 1;
-		          else        error_flag <= 0;
-		default : begin
-		  	        Tx         <= 1;
-		  	        data_out   <= 0;
-		  	        error_flag <= 0;
-		  	      end
-	endcase
+	if (clk_gen) begin
+		case (current_state)
+			IDLE    : begin 
+				          if(start)
+				            Tx       <= 0;
+				          else
+				          	Tx       <= 1;
+				          data_out   <= data_out;
+				          error_flag <= 0;
+				        end
+			RECIEVE : begin
+				          Tx         <= 1;
+				          error_flag <= 0;
+				          data_out   <= data_out;
+				        end
+			TRANSMIT: begin
+				          if(counter == D_WIDTH)
+				          	Tx <= parity_check_T;
+				          else
+				            Tx <= data_buff[0];
+				          data_out   <= data_out;
+				          error_flag <= 0;
+				        end
+			PARITY  : begin
+				          Tx         <= 1;
+				          if(Rx != parity_check_R) begin
+				          	error_flag <= 1  ;
+				            data_out   <= data_out;
+				          end
+				          else begin	
+				            data_out   <= data_buff;
+				            error_flag <= 0;
+				          end 
+				        end
+			STOP_T  : Tx  <= 1;
+			STOP_R  : if(Rx == 0) error_flag <= 1;
+			          else        error_flag <= 0;
+			default : begin
+			  	        Tx         <= 1;
+			  	        data_out   <= 0;
+			  	        error_flag <= 0;
+			  	      end
+		endcase
+	end
+	else if(~arst_n) begin
+		error_flag <= 0;
+		data_out   <= 0;
+		Tx         <= 1;
+	end
+	else begin
+		error_flag <= error_flag;
+		data_out   <= data_out  ;
+		Tx         <= Tx        ;
+	end
 end
 
 assign even_odd_R = ^data_buff;
